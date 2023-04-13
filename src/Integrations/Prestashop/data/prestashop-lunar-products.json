@@ -1,0 +1,22 @@
+{
+    "id": "legacy->id_product",
+    "id_manufacturer": "legacy->id_manufacturer",
+    "id_category_default": "legacy->id_category_default",
+    "id_default_combination": "legacy->id_default_combination",
+    "name": "attribute.details.name",
+    "description_short": "attribute.details.description_short",
+    "description": "attribute.details.description",
+    "meta_title": "attribute.seo.meta_title",
+    "meta_description": "attribute.seo.meta_description",
+    "manufacturer_name": "legacy->manufacturer_name",
+    "price": "legacy->price",
+    "active": "legacy->active",
+    "reference": "legacy->sku",
+    "date_add": "created_at",
+    "date_upd": "updated_at",
+    "quantity": "stock",
+    "legacy_lookup": {
+        "id_manufacturer": "brands:name",
+        "id_category_default": "collections:name"
+    }
+}

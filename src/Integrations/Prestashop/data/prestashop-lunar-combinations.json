@@ -1,0 +1,23 @@
+{
+    "id": "legacy->id",
+    "id_product": "legacy->id_product",
+    "location": "legacy->location",
+    "ean13": "ean",
+    "isbn": "legacy->isbn",
+    "upc": "upc",
+    "mpn": "mpn",
+    "quantity": "stock",
+    "reference": "sku",
+    "supplier_reference": "legacy->supplier_reference",
+    "wholesale_price": "legacy->wholesale_price",
+    "price": "legacy->price",
+    "ecotax": "legacy->ecotax",
+    "weight": "weight_value",
+    "unit_price_impact": "legacy->unit_price_impact",
+    "minimal_quantity": "legacy->minimal_quantity",
+    "low_stock_threshold": "legacy->low_stock_threshold",
+    "low_stock_alert": "legacy->low_stock_alert",
+    "default_on": "legacy->default_on",
+    "available_date": "legacy->available_date",
+    "associations": "associations"
+}

@@ -1,0 +1,21 @@
+{
+    "id": "legacy->id_cart",
+    "id_address_delivery": "legacy->id_address_delivery",
+    "id_address_invoice": "legacy->id_address_invoice",
+    "id_currency": "legacy->id_currency",
+    "id_customer": "legacy->id_customer",
+    "id_guest": "legacy->id_guest",
+    "id_lang": "legacy->id_lang",
+    "id_carrier": "legacy->id_carrier",
+    "recyclable": "legacy->recyclable",
+    "gift": "legacy->gift",
+    "gift_message": "legacy->gift_message",
+    "delivery_option": "legacy->delivery_option",
+    "date_add": "created_at",
+    "date_upd": "updated_at",
+    "legacy_lookup": {
+        "id_address_delivery": "addresses:id",
+        "id_address_invoice": "addresses:id",
+        "id_customer": "customers:id"
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "id": "legacy->id",
+    "is_color_group": "legacy->is_color_group",
+    "group_type": "legacy->group_type",
+    "position": "position",
+    "name": "name"
+}

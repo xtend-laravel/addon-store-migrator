@@ -1,0 +1,7 @@
+{
+    "id": "legacy->id",
+    "id_attribute_group": "legacy->product_option_id",
+    "color": "legacy->color",
+    "position": "position",
+    "name": "name"
+}

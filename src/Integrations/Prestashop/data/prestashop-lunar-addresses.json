@@ -1,0 +1,22 @@
+{
+    "id": "legacy->id_address",
+    "id_customer": "legacy->customer_id",
+    "id_country": "legacy->country_id",
+    "id_state": "legacy->id_state",
+    "alias": "legacy->alias",
+    "company": "company_name",
+    "lastname": "last_name",
+    "firstname": "first_name",
+    "vat_number": "legacy->vat_number",
+    "address1": "line_one",
+    "address2": "line_two",
+    "postcode": "postcode",
+    "city": "city",
+    "other": "legacy->other",
+    "phone": "contact_phone",
+    "phone_mobile": "legacy->phone_mobile",
+    "deleted": "legacy->deleted",
+    "dni": "legacy->dni",
+    "date_add": "created_at",
+    "date_upd": "updated_at"
+}

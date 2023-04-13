@@ -1,0 +1,36 @@
+{
+    "name": "xtend-laravel/addon-store-migrator",
+    "description": "Store migrator addon for Lunar",
+    "type": "library",
+    "keywords": [
+        "laravel",
+        "lunar",
+        "prestashop",
+        "xtendlunar",
+        "migrator"
+    ],
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "XtendLunar\\Addons\\StoreMigrator\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Adam Lee",
+            "email": "adam@codelabx.ltd"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "XtendLunar\\Addons\\StoreMigrator\\StoreMigratorProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "sammyjo20/saloon": "^2.0",
+        "sammyjo20/saloon-laravel": "^2.0"
+    }
+}

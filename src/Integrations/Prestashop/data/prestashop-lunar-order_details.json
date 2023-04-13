@@ -1,0 +1,14 @@
+{
+    "id": "legacy->id",
+    "id_order": "legacy->id_order",
+    "product_id": "legacy->product_id",
+    "product_attribute_id": "legacy->product_attribute_id",
+    "product_quantity": "quantity",
+    "product_reference": "identifier",
+    "product_ean13": "legacy->product_ean13",
+    "product_isbn": "legacy->product_upc",
+    "product_upc": "legacy->product_upc",
+    "product_price": "unit_price",
+    "unit_price_tax_incl": "total",
+    "unit_price_tax_excl": "sub_total"
+}

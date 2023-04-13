@@ -1,0 +1,8 @@
+{
+    "id": "legacy->id",
+    "reduction": "legacy->reduction",
+    "price_display_method": "legacy->price_display_method",
+    "name": "name",
+    "date_add": "created_at",
+    "date_upd": "updated_at"
+}

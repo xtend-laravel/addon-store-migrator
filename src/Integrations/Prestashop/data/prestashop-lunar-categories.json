@@ -1,0 +1,13 @@
+{
+    "id": "legacy->id",
+    "id_parent": "legacy->parent_id",
+    "name": "attribute.details.name",
+    "position": "legacy->position",
+    "active": "legacy->active",
+    "description_short": "attribute.details.description_short",
+    "description": "attribute.details.description",
+    "meta_title": "attribute.seo.meta_title",
+    "meta_description": "attribute.seo.meta_description",
+    "date_add": "created_at",
+    "date_upd": "updated_at"
+}
