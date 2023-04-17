@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('xtend_store_migrator', function (Blueprint $table) {
+        Schema::create('xtend_store_migrator_integrations', function (Blueprint $table) {
             $table->id();
 			$table->string('name');
             $table->string('integration');
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('xtend_store_migrator');
+        Schema::dropIfExists('xtend_store_migrator_integrations');
     }
 };

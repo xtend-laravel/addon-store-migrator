@@ -5,5 +5,5 @@
         </strong>
     </div>
 
-    @livewire('hub.components.store-migrator.table')
+    @livewire('hub.components.store-migrator-integrations.table')
 </div>

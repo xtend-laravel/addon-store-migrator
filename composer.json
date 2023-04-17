@@ -12,7 +12,9 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "XtendLunar\\Addons\\StoreMigrator\\": "src/"
+            "XtendLunar\\Addons\\StoreMigrator\\": "src/",
+            "StoreMigrator\\Database\\Factories\\": "database/factories/",
+            "StoreMigrator\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "authors": [

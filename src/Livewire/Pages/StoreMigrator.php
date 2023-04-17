@@ -6,7 +6,7 @@ use Illuminate\View\View;
 use Livewire\Component;
 use Lunar\Hub\Http\Livewire\Traits\Notifies;
 
-class StoreMigratorIndex extends Component
+class StoreMigrator extends Component
 {
     use Notifies;
 

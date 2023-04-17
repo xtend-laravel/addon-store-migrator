@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('xtend_store_migrator_resources', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('migrator_id');
+            $table->foreignId('integration_id');
 			$table->string('name');
 			$table->json('field_map')->nullable();
 			$table->json('settings')->nullable();
