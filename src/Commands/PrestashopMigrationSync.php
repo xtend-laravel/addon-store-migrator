@@ -3,6 +3,7 @@
 namespace XtendLunar\Addons\StoreMigrator\Commands;
 
 use Illuminate\Console\Command;
+use Laravel\Pennant\Feature;
 use Lunar\Models\Brand;
 use Lunar\Models\Cart;
 use Lunar\Models\Collection;
@@ -10,6 +11,7 @@ use Lunar\Models\Customer;
 use Lunar\Models\Order;
 use Lunar\Models\Product;
 use Lunar\Models\ProductOption;
+use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\PrestashopConnector;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\CartsRequest;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\CategoriesRequest;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\CustomersRequest;
@@ -60,7 +62,6 @@ class PrestashopMigrationSync extends Command
 
         if ($entity === 'all') {
             $this->runAll($connector);
-
             return;
         }
 
@@ -73,18 +74,16 @@ class PrestashopMigrationSync extends Command
 
         // @todo Validate the entity of the request
 
-        $request = $connector->request(
-            match ($entity) {
-                'manufacturers' => new ManufacturersRequest,
-                'categories' => new CategoriesRequest,
-                'product_options' => new OptionRequest,
-                'product_features' => new FeatureRequest,
-                'products' => new ProductsRequest,
-                'customers' => new CustomersRequest,
-                'carts' => new CartsRequest,
-                'orders' => new OrdersRequest,
-            }
-        );
+        $request = match ($entity) {
+            'manufacturers' => new ManufacturersRequest,
+            'categories' => new CategoriesRequest,
+            'product_options' => new OptionRequest,
+            'product_features' => new FeatureRequest,
+            'products' => new ProductsRequest,
+            'customers' => new CustomersRequest,
+            'carts' => new CartsRequest,
+            'orders' => new OrdersRequest,
+        };
 
         if (in_array($entity, ['carts', 'orders'])) {
             // Only fetch customer carts and orders for now
@@ -100,7 +99,7 @@ class PrestashopMigrationSync extends Command
             ]);
         }
 
-        $response = $request->send();
+        $response = PrestashopConnector::make()->send($request);
         $response->throw();
 
         $entityIds = collect($response->json($entity))->pluck('id');
@@ -148,60 +147,70 @@ class PrestashopMigrationSync extends Command
         //$this->runCategories($connector);
         //$this->runProductOptions($connector);
         //$this->runProductFeatures($connector);
-        //$this->runProducts($connector);
+        $this->runProducts($connector);
         //$this->runCustomers($connector);
         //$this->runCarts($connector);
-        $this->runOrders($connector);
+        //$this->runOrders($connector);
     }
 
     protected function runCategories(PrestashopConnector $connector)
     {
-        $request = $connector->request(new CategoriesRequest);
-        $response = $request->send();
+        $response = $connector->send(new CategoriesRequest);
         $response->throw();
 
-        $entityIds = collect($response->json('categories'))->pluck('id');
-        $entityIds->each(fn ($entityId) => CategorySync::dispatch($entityId)->onQueue('categories'));
+        $entityIds = collect($response->json('categories'))->pluck('id')->skip(1);
 
+        $entityIds->each(
+			fn ($entityId) => CategorySync::dispatch($entityId)->onQueue('categories'),
+        );
+
+		// @todo this is a slow process, need to optimize
         CollectionParentSync::dispatchSync();
     }
 
     protected function runProductOptions(PrestashopConnector $connector)
     {
-        $request = $connector->request(new OptionRequest);
-        $response = $request->send();
+        $response = $connector->send(new OptionRequest);
         $response->throw();
 
         $entityIds = collect($response->json('product_options'))->pluck('id');
-        $entityIds->each(fn ($entityId) => OptionSync::dispatch($entityId)->onQueue('product_options'));
+        $entityIds->each(
+			fn ($entityId) => OptionSync::dispatch($entityId)->onQueue('product_options'),
+        );
     }
 
     protected function runProductFeatures(PrestashopConnector $connector)
     {
-        $request = $connector->request(new FeatureRequest);
-        $response = $request->send();
+	    if (Feature::inactive('product-features')) {
+			return;
+	    }
+
+        $response = $connector->send(new FeatureRequest);
         $response->throw();
 
         $entityIds = collect($response->json('product_features'))->pluck('id');
-        $entityIds->each(fn ($entityId) => FeatureSync::dispatch($entityId)->onQueue('product_features'));
+        $entityIds->each(
+			fn ($entityId) => FeatureSync::dispatch($entityId)->onQueue('product_features'),
+        );
     }
 
     protected function runProducts(PrestashopConnector $connector)
     {
-        $request = $connector->request(new ProductsRequest);
-        //$request->query()->add('limit', 100);
-        $response = $request->send();
+	    $request = new ProductsRequest;
+        $request->query()->add('limit', 20);
+	    $response = $connector->send($request);
         $response->throw();
 
         $entityIds = collect($response->json('products'))->pluck('id');
-        $entityIds->each(fn ($entityId) => ProductSync::dispatch($entityId)->onQueue('products'));
+        $entityIds->each(
+			fn ($entityId) => ProductSync::dispatchSync($entityId),
+        );
     }
 
     protected function runCustomers(PrestashopConnector $connector)
     {
-        $request = $connector->request(new CustomersRequest);
+        $response = $connector->send(new CustomersRequest);
         //$request->query()->add('limit', 100);
-        $response = $request->send();
         $response->throw();
 
         $entityIds = collect($response->json('customers'))->pluck('id');
@@ -210,10 +219,10 @@ class PrestashopMigrationSync extends Command
 
     protected function runCarts(PrestashopConnector $connector)
     {
-        $request = $connector->request(new CartsRequest);
+        $request = new CartsRequest;
         $request->query()->add('filter[id_customer]', '[1,9999999]');
         //$request->query()->add('limit', 100);
-        $response = $request->send();
+        $response = $connector->send($request);
         $response->throw();
 
         $entityIds = collect($response->json('carts'))->pluck('id');
@@ -222,10 +231,10 @@ class PrestashopMigrationSync extends Command
 
     protected function runOrders(PrestashopConnector $connector)
     {
-        $request = $connector->request(new OrdersRequest);
+        $request = new OrdersRequest;
         $request->query()->add('filter[id_customer]', '[1,9999999]');
         //$request->query()->add('limit', 100);
-        $response = $request->send();
+        $response = $connector->send($request);
         $response->throw();
 
         $entityIds = collect($response->json('orders'))->pluck('id');

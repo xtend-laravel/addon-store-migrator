@@ -11,26 +11,28 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ProductImageSave extends Processor
 {
-    public function process(Collection $product): mixed
+    public function process(Collection $data): Collection
     {
         /** @var \Lunar\Models\Product $productModel */
-        $productModel = $product->get('productModel');
-        $images = collect($product->get('images'));
+        $productModel = $data->get('productModel');
+        $images = collect($data->get('images'));
         if ($images->isEmpty()) {
-            return $product;
+            return $data;
         }
 
         $images->each(
-            fn ($image, $key) => $this->saveImage($image, $productModel, $key)
+            fn ($image, $key) => $this->saveImage($image, $productModel, $key),
         );
 
-        return $product;
+        return $data;
     }
 
     protected function saveImage(string $image, Product $productModel, int $key): void
     {
         // @todo Check if image exists note remotely is too slow
-        // || !Http::get($image)->ok()
+        if (!Http::get($image)->ok()) {
+			return;
+		}
 
         // if ($this->imageExists($image, $productModel)) {
         //     dd($image);

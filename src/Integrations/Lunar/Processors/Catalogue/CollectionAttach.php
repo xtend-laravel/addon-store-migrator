@@ -14,7 +14,7 @@ class CollectionAttach extends Processor
         $categoryIds = collect($product->get('categories'))->pluck('id');
 
         $collections = $categoryIds->map(
-            fn ($categoryId) => \Xtend\Extensions\Lunar\Models\Collection::where('legacy_data->id', $categoryId)->first()
+            fn ($categoryId) => \Xtend\Extensions\Lunar\Core\Models\Collection::where('legacy_data->id', $categoryId)->first()
         )->filter();
 
         if ($collections->isNotEmpty()) {

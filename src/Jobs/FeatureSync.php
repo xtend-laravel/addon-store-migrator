@@ -14,10 +14,11 @@ use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithPipeline;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Transformers\FieldLegacyTransformer;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Transformers\FieldMapKeyTransformer;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Transformers\TranslationTransformer;
-
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\PrestashopConnector;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\FeatureRequest;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\FeatureValueRequest;
+use XtendLunar\Features\ProductFeatures\Models\ProductFeature;
+use XtendLunar\Features\ProductFeatures\Models\ProductFeatureValue;
 
 class FeatureSync implements ShouldQueue
 {
@@ -76,6 +77,7 @@ class FeatureSync implements ShouldQueue
             'filter[id_feature]' => $this->featureId,
             'display' => 'full',
         ]);
+		$response = PrestashopConnector::make()->send($request);
 
         $featureValues = collect($response->json('product_feature_values'))->map(function ($combination) {
             return $this->prepareThroughPipeline(
@@ -121,7 +123,6 @@ class FeatureSync implements ShouldQueue
 
     protected function createFeatureValues(ProductFeature $feature): array
     {
-
         $featureValues = collect($this->feature->get('values'))->filter(
             fn ($featureValue) => ! ProductFeatureValue::where('legacy_data->id', $featureValue->get('legacy')->get('id'))->exists()
         );

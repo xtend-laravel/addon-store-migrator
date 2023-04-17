@@ -14,29 +14,29 @@ use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
 
 class ProductSave extends Processor
 {
-    public function process(Collection $product): mixed
+    public function process(Collection $data): Collection
     {
         $productModel = Product::updateOrCreate([
-            'legacy_data->id_product' => $product->get('legacy')->get('id_product'),
+            'legacy_data->id_product' => $data->get('legacy')->get('id_product'),
         ], [
-            'attribute_data' => $this->getAttributeData($product),
+            'attribute_data' => $this->getAttributeData($data),
             'product_type_id' => $this->getDefaultProductTypeId(),
-            'status' => $product->get('legacy')->get('active') ? 'published' : 'draft',
-            'legacy_data' => $product->get('legacy'),
+            'status' => $data->get('legacy')->get('active') ? 'published' : 'draft',
+            'legacy_data' => $data->get('legacy'),
         ]);
 
-        $productModel->setCreatedAt($product->get('created_at'))->save();
-        $product->put('productModel', $productModel);
+        $productModel->setCreatedAt($data->get('created_at'))->save();
+	    $data->put('productModel', $productModel);
 
-        return $product;
+        return $data;
     }
 
-    protected function getAttributeData(Collection $product): array
+    protected function getAttributeData(Collection $data): array
     {
         /** @var Collection $attributes */
         $attributes = Attribute::whereAttributeType(Product::class)->get();
 
-        $productAttributes = $product->filter(fn ($value, $field) => str_starts_with($field, 'attribute'))->mapWithKeys(
+        $productAttributes = $data->filter(fn ($value, $field) => str_starts_with($field, 'attribute'))->mapWithKeys(
             fn ($value, $field) => [Str::afterLast($field, '.') => $value]
         );
 

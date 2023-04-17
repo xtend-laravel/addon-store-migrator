@@ -12,8 +12,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithPipeline;
+use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\BrandAssociation;
+use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\CollectionAttach;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductImageSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductSave;
+use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductVariantSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Transformers\FieldLegacyTransformer;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Transformers\FieldMapKeyTransformer;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Transformers\TranslationTransformer;
@@ -51,7 +54,10 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
         $this->prepare();
 
         //$exists = Product::where('legacy_data->id_product', $this->productId)->first();
-        DB::transaction(fn () => $this->sync());
+	    if ($this->product->count()) {
+			dd($this->product->toArray());
+		    //DB::transaction(fn() => $this->sync());
+	    }
     }
 
     protected function prepare(): void
@@ -59,7 +65,7 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
         $this->prepareProduct();
 
         if (Arr::get($this->product, 'legacy.id_default_combination') > 0) {
-            $this->prepareCombinations();
+            //$this->prepareCombinations();
         }
 
         // @todo Prepare images for product and combinations
@@ -73,6 +79,12 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
 
         $categories = $response->json('products')[0]['associations']['categories'] ?? [];
         $images = $response->json('products')[0]['associations']['images'] ?? [];
+
+		if (!$images) {
+			// No images so skip this product for now
+			$this->product = collect();
+			return;
+		}
 
         $this->product = $this->prepareThroughPipeline(
             passable: PrestashopConnector::mapFields(
@@ -98,7 +110,7 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
     protected function prepareProductImages(): array
     {
         $request = new ImageRequest('products', $this->productId);
-        $response = $request;
+		$response = PrestashopConnector::make()->send($request);
 
         $xml = new \SimpleXMLElement($response->body());
 
@@ -120,6 +132,7 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
             'filter[id_product]' => $this->productId,
             'display' => 'full',
         ]);
+		$response = PrestashopConnector::make()->send($request);
 
         // $combinations = collect($response->json('combinations'))->filter(fn ($combination) => count($combination['associations']['images'] ?? []));
         //
@@ -153,6 +166,7 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
             'filter[id]' => "[{$optionValueIds->implode('|')}]",
             'display' => 'full',
         ]);
+	    $response = PrestashopConnector::make()->send($request);
 
         return collect($response->json('product_option_values'))->map(function ($optionValue) {
             return $this->prepareThroughPipeline(
@@ -176,9 +190,9 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
             pipes: [
                 ProductSave::class,
                 ProductImageSave::class,
-                //ProductVariantSave::class,
-                //BrandAssociation::class,
-                //CollectionAttach::class,
+                ProductVariantSave::class,
+                BrandAssociation::class,
+                CollectionAttach::class,
             ],
         );
     }

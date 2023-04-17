@@ -118,6 +118,7 @@ class OptionSync implements ShouldQueue
             'filter[id]' => "[{$optionValueIds->implode('|')}]",
             'display' => 'full',
         ]);
+	    $response = PrestashopConnector::make()->send($request);
 
         $optionValues = collect($response->json('product_option_values'))->map(function ($optionValue) {
             return $this->prepareThroughPipeline(
