@@ -197,7 +197,7 @@ class PrestashopMigrationSync extends Command
     protected function runProducts(PrestashopConnector $connector)
     {
 	    $request = new ProductsRequest;
-        $request->query()->add('limit', 20);
+        $request->query()->add('limit', 200);
 	    $response = $connector->send($request);
         $response->throw();
 

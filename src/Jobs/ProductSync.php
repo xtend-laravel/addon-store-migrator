@@ -10,7 +10,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithPipeline;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\BrandAssociation;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\CollectionAttach;
@@ -25,6 +24,7 @@ use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\Combination
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\ImageRequest;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\OptionValueRequest;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\ProductsRequest;
+use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\SpecificPricesRequest;
 
 class ProductSync implements ShouldQueue, ShouldBeUnique
 {
@@ -74,9 +74,13 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
     protected function prepareProduct(): void
     {
         $request = new ProductsRequest(productId: $this->productId);
-        $request->query()->add('display', 'full');
-        $response = PrestashopConnector::make()->send($request);
+		$request->query()->merge([
+			'price[specific_price][use_reduction]' => true,
+			'price[reduction_amount][only_reduction]' => true,
+			'display' => 'full',
+		]);
 
+        $response = PrestashopConnector::make()->send($request);
         $categories = $response->json('products')[0]['associations']['categories'] ?? [];
         $images = $response->json('products')[0]['associations']['images'] ?? [];
 
@@ -105,6 +109,8 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
         if ($images) {
             $this->product->put('images', $this->prepareProductImages());
         }
+
+	    $this->product->put('prices', $this->prepareProductPrices());
     }
 
     protected function prepareProductImages(): array
@@ -124,6 +130,18 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
         //$ids = $imageUrls->values()->map(fn ($url) => basename($url))->toArray();
         return $imageUrls->values()->toArray();
     }
+
+	protected function prepareProductPrices(): array
+	{
+		$request = new SpecificPricesRequest;
+		$request->query()->merge([
+			'filter[id_product]' => "[{$this->productId}]",
+			'display' => 'full',
+		]);
+
+		$response = PrestashopConnector::make()->send($request);
+		return $response->json('specific_prices') ?? [];
+	}
 
     protected function prepareCombinations(): void
     {

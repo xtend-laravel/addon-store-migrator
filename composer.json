@@ -32,6 +32,7 @@
     },
     "minimum-stability": "dev",
     "require": {
+        "ext-simplexml": "*",
         "sammyjo20/saloon": "^2.0",
         "sammyjo20/saloon-laravel": "^2.0"
     }

@@ -10,6 +10,8 @@
     "meta_description": "attribute.seo.meta_description",
     "manufacturer_name": "legacy->manufacturer_name",
     "price": "legacy->price",
+    "specific_price": "legacy->specific_price",
+    "reduction_amount": "legacy->reduction_amount",
     "active": "legacy->active",
     "reference": "legacy->sku",
     "date_add": "created_at",
