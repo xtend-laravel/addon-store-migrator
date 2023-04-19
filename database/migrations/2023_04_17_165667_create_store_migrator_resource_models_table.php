@@ -16,10 +16,12 @@ return new class extends Migration
         Schema::create('xtend_store_migrator_resource_models', function (Blueprint $table) {
             $table->id();
             $table->foreignId('resource_id');
-			$table->morphs('model', 'store_migrator_model_index');
-	        $table->enum('status', ['pending', 'created', 'updated', 'deleted'])->default('pending');
+            $table->bigInteger('source_id');
+			$table->nullableMorphs('destination_model', 'store_migrator_destination_model_index');
+	        $table->enum('status', ['pending', 'processing', 'created', 'updated', 'deleted'])->default('pending');
 			$table->timestamp('failed_at')->nullable();
 			$table->string('failed_reason')->nullable();
+            $table->json('debug')->nullable();
             $table->timestamps();
         });
     }

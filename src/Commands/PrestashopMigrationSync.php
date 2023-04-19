@@ -165,7 +165,7 @@ class PrestashopMigrationSync extends Command
         );
 
 		// @todo this is a slow process, need to optimize
-        CollectionParentSync::dispatchSync();
+        CollectionParentSync::dispatch()->onQueue('categories');
     }
 
     protected function runProductOptions(PrestashopConnector $connector)
@@ -197,13 +197,14 @@ class PrestashopMigrationSync extends Command
     protected function runProducts(PrestashopConnector $connector)
     {
 	    $request = new ProductsRequest;
-        $request->query()->add('limit', 200);
+        // $request->query()->add('limit', 200);
 	    $response = $connector->send($request);
         $response->throw();
 
         $entityIds = collect($response->json('products'))->pluck('id');
         $entityIds->each(
-			fn ($entityId) => ProductSync::dispatchSync($entityId),
+			//fn ($entityId) => ProductSync::dispatchSync($entityId),
+			fn ($entityId) => ProductSync::dispatch($entityId)->onQueue('products'),
         );
     }
 

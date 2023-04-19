@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class StoreMigratorIntegration
+ *
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class StoreMigratorIntegration extends Model
 {
     use HasFactory;
@@ -20,6 +25,6 @@ class StoreMigratorIntegration extends Model
 
 	public function resources(): HasMany
 	{
-		return $this->hasMany(StoreMigratorResource::class);
+		return $this->hasMany(StoreMigratorResource::class, 'integration_id');
 	}
 }

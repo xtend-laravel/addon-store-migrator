@@ -3,14 +3,18 @@
 namespace XtendLunar\Addons\StoreMigrator\Jobs;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Xtend\Extensions\Lunar\Core\Models\Product;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithDebug;
 use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithPipeline;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithResourceModel;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\BrandAssociation;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\CollectionAttach;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductImageSave;
@@ -25,10 +29,18 @@ use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\ImageReques
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\OptionValueRequest;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\ProductsRequest;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\SpecificPricesRequest;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResource;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
-class ProductSync implements ShouldQueue, ShouldBeUnique
+class ProductSync implements ShouldQueue
 {
-    use Dispatchable, InteractsWithPipeline, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithDebug;
+    use InteractsWithPipeline;
+    use InteractsWithResourceModel;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * @var Collection
@@ -42,7 +54,9 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
      */
     public function __construct(
         protected int $productId
-    ) {}
+    ) {
+        $this->setResourceSourceId($this->productId);
+    }
 
     /**
      * Execute the job.
@@ -51,24 +65,20 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
      */
     public function handle()
     {
-        $this->prepare();
-
-        //$exists = Product::where('legacy_data->id_product', $this->productId)->first();
-	    if ($this->product->count()) {
-			dd($this->product->toArray());
-		    //DB::transaction(fn() => $this->sync());
-	    }
+        $this->benchmark([
+            'prepare' => fn() => $this->prepare(),
+            'sync' => fn() => $this->product->isNotEmpty()
+                ? DB::transaction(fn() => $this->sync())
+                : null,
+        ])->log();
     }
 
     protected function prepare(): void
     {
-        $this->prepareProduct();
-
-        if (Arr::get($this->product, 'legacy.id_default_combination') > 0) {
-            //$this->prepareCombinations();
-        }
-
-        // @todo Prepare images for product and combinations
+        $this->benchmark([
+            'prepare.product' => fn() => $this->prepareProduct(),
+            'prepare.variants' => fn() => $this->prepareVariants(),
+        ])->log();
     }
 
     protected function prepareProduct(): void
@@ -143,8 +153,12 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
 		return $response->json('specific_prices') ?? [];
 	}
 
-    protected function prepareCombinations(): void
+    protected function prepareVariants(): void
     {
+        if (!Arr::has($this->product, 'legacy.id_default_combination')) {
+            return;
+        }
+
         $request = new CombinationsRequest;
         $request->query()->merge([
             'filter[id_product]' => $this->productId,
@@ -201,10 +215,11 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
 
     protected function sync(): void
     {
-        //$this->product->put('legacy_lookup', FieldMapper::getLegacyFieldsLookup('lunar', 'products'));
-
         $this->prepareThroughPipeline(
-            passable: $this->product,
+            passable: [
+                'product' => $this->product,
+                'resourceModel' => $this->resourceModel,
+            ],
             pipes: [
                 ProductSave::class,
                 ProductImageSave::class,
@@ -213,15 +228,8 @@ class ProductSync implements ShouldQueue, ShouldBeUnique
                 CollectionAttach::class,
             ],
         );
-    }
 
-    /**
-     * The unique ID of the job.
-     *
-     * @return string
-     */
-    public function uniqueId()
-    {
-        return $this->productId;
+        $this->resourceModel->status = 'created';
+        $this->resourceModel->save();
     }
 }
