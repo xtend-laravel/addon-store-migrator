@@ -11,32 +11,36 @@ use Lunar\Models\Attribute;
 use Lunar\Models\Product;
 use Lunar\Models\ProductType;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class ProductSave extends Processor
 {
-    public function process(Collection $data): Collection
+    public function process(Collection $product, StoreMigratorResourceModel $resourceModel): void
     {
         $productModel = Product::updateOrCreate([
-            'legacy_data->id_product' => $data->get('legacy')->get('id_product'),
+            'legacy_data->id_product' => $product->get('legacy')->get('id_product'),
         ], [
-            'attribute_data' => $this->getAttributeData($data),
+            'attribute_data' => $this->getAttributeData($product),
             'product_type_id' => $this->getDefaultProductTypeId(),
-            'status' => $data->get('legacy')->get('active') ? 'published' : 'draft',
-            'legacy_data' => $data->get('legacy'),
+            'status' => $product->get('legacy')->get('active') ? 'published' : 'draft',
+            'legacy_data' => $product->get('legacy'),
         ]);
 
-        $productModel->setCreatedAt($data->get('created_at'))->save();
-	    $data->put('productModel', $productModel);
+        $productModel->setCreatedAt($product->get('created_at'))->save();
+	    $product->put('productModel', $productModel);
 
-        return $data;
+        $resourceModel->destination_model_type = Product::class;
+        $resourceModel->destination_model_id = $productModel->id;
+        $resourceModel->status = 'processing';
+        $resourceModel->save();
     }
 
-    protected function getAttributeData(Collection $data): array
+    protected function getAttributeData(Collection $product): array
     {
         /** @var Collection $attributes */
         $attributes = Attribute::whereAttributeType(Product::class)->get();
 
-        $productAttributes = $data->filter(fn ($value, $field) => str_starts_with($field, 'attribute'))->mapWithKeys(
+        $productAttributes = $product->filter(fn ($value, $field) => str_starts_with($field, 'attribute'))->mapWithKeys(
             fn ($value, $field) => [Str::afterLast($field, '.') => $value]
         );
 

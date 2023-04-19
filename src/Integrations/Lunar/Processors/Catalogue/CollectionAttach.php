@@ -4,10 +4,11 @@ namespace XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogu
 
 use Illuminate\Support\Collection;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class CollectionAttach extends Processor
 {
-    public function process(Collection $product): mixed
+    public function process(Collection $product, StoreMigratorResourceModel $resourceModel): void
     {
         /** @var \Lunar\Models\Product $productModel */
         $productModel = $product->get('productModel');
@@ -27,7 +28,5 @@ class CollectionAttach extends Processor
             $productModel->refresh();
             $product->put('productModel', $productModel);
         }
-
-        return $product;
     }
 }

@@ -2,14 +2,26 @@
 
 namespace XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors;
 
-use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithDebug;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithResourceModel;
 
 abstract class Processor
 {
-    public function handle(Collection $data, \Closure $next): mixed
-    {
-        return $next($this->process($data));
-    }
+    use InteractsWithDebug;
+    use InteractsWithResourceModel;
 
-    abstract public function process(Collection $data): mixed;
+    protected mixed $process;
+
+    public function handle(mixed $passable, \Closure $next): mixed
+    {
+        $this->resourceModel = $passable['resourceModel'];
+
+        $processKey = Str::snake(class_basename($this), '-');
+        $this->benchmark([
+            $processKey => fn () => $this->process(...$passable),
+        ])->log();
+
+        return $next($passable);
+    }
 }

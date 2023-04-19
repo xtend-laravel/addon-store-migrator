@@ -12,6 +12,7 @@ use Lunar\Models\ProductOptionValue;
 use Lunar\Models\ProductVariant;
 use Lunar\Models\TaxClass;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class ProductVariantSave extends Processor
 {
@@ -25,7 +26,7 @@ class ProductVariantSave extends Processor
         $this->currency = Currency::getDefault();
     }
 
-    public function process(Collection $product): mixed
+    public function process(Collection $product, StoreMigratorResourceModel $resourceModel): mixed
     {
         /** @var \Lunar\Models\Product $productModel */
         $productModel = $product->get('productModel');
@@ -52,7 +53,7 @@ class ProductVariantSave extends Processor
         $productModel->variant_default_id = $productModel->variants->first()->id;
         $productModel->update();
 
-        return $product;
+        return [$product];
     }
 
     protected function createDefaultProductVariant(Product $productModel, Collection $product, int $price): void
