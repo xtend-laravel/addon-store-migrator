@@ -39,7 +39,7 @@ class ProductImageSave extends Processor
 
         $media = $productModel
             ->addMediaFromUrl($image)
-            ->toMediaCollection('products');
+            ->toMediaCollection('images');
 
         $media->setCustomProperty('primary', $key === 0);
         $media->save();
