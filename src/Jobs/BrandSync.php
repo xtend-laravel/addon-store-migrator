@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use Lunar\Models\Brand;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\PrestashopConnector;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\ManufacturersRequest;
 
@@ -42,8 +43,8 @@ class BrandSync implements ShouldQueue
 
         $manufacturer = $response->json('manufacturers')[0];
 
-        // Brand::query()->where('name', $manufacturer['name'])->update(['legacy_data' => [
-        //     'id' => $manufacturer['id'],
-        // ]]);
+        Brand::query()->where('name', $manufacturer['name'])->update(['legacy_data' => [
+            'id' => $manufacturer['id'],
+        ]]);
     }
 }
