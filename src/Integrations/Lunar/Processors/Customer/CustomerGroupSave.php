@@ -7,10 +7,11 @@ use Illuminate\Support\Str;
 use Lunar\Models\Customer;
 use Lunar\Models\CustomerGroup;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class CustomerGroupSave extends Processor
 {
-    public function process(Collection $customer): mixed
+    public function process(Collection $customer, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Lunar\Models\Customer $customerModel */
         $customerModel = $customer->get('customerModel');

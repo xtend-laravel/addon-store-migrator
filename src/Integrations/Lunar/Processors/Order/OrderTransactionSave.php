@@ -5,11 +5,13 @@ namespace XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Order;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\PrestashopConnector;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\OrderPaymentsRequest;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class OrderTransactionSave extends Processor
 {
-    public function process(Collection $order): mixed
+    public function process(Collection $order, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Xtend\Extensions\Lunar\Models\Order $orderModel */
         $orderModel = $order->get('orderModel');
@@ -56,6 +58,7 @@ class OrderTransactionSave extends Processor
             'display' => 'full',
         ]);
 
+        $response = PrestashopConnector::make()->send($request);
         return $response->json('order_payments')[0] ?? [];
     }
 

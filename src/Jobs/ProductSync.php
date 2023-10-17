@@ -17,6 +17,7 @@ use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithPipeline;
 use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithResourceModel;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\BrandAssociation;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\CollectionAttach;
+use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductFeatureValueSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductImageSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Catalogue\ProductVariantSave;
@@ -55,7 +56,7 @@ class ProductSync implements ShouldQueue
     public function __construct(
         protected int $productId
     ) {
-        $this->setResourceSourceId($this->productId);
+        $this->setResourceSourceId($this->productId, 'products');
     }
 
     /**
@@ -93,6 +94,7 @@ class ProductSync implements ShouldQueue
         $response = PrestashopConnector::make()->send($request);
         $categories = $response->json('products')[0]['associations']['categories'] ?? [];
         $images = $response->json('products')[0]['associations']['images'] ?? [];
+        $features = $response->json('products')[0]['associations']['product_features'] ?? [];
 
 		if (!$images) {
 			// No images so skip this product for now
@@ -118,6 +120,10 @@ class ProductSync implements ShouldQueue
 
         if ($images) {
             $this->product->put('images', $this->prepareProductImages());
+        }
+
+        if ($features) {
+            $this->product->put('features', $features);
         }
 
 	    $this->product->put('prices', $this->prepareProductPrices());
@@ -222,10 +228,11 @@ class ProductSync implements ShouldQueue
             ],
             pipes: [
                 ProductSave::class,
-                ProductImageSave::class,
-                ProductVariantSave::class,
-                BrandAssociation::class,
-                CollectionAttach::class,
+                ProductFeatureValueSave::class,
+                // ProductImageSave::class,
+                // ProductVariantSave::class,
+                // BrandAssociation::class,
+                // CollectionAttach::class,
             ],
         );
 

@@ -6,11 +6,13 @@ use Illuminate\Support\Collection;
 use Lunar\Models\Country;
 use Lunar\Models\Customer;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\PrestashopConnector;
 use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\CountriesRequest;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class AddressesSave extends Processor
 {
-    public function process(Collection $customer): mixed
+    public function process(Collection $customer, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Lunar\Models\Customer $customerModel */
         $customerModel = $customer->get('customerModel');
@@ -56,8 +58,7 @@ class AddressesSave extends Processor
             'display' => 'full',
         ]);
 
-        $response =
-
+        $response = PrestashopConnector::make()->send($request);
         $iso = $response->json('countries')[0]['iso_code'] ?? null;
 
         return Country::where('iso2', $iso)->first()->id ?? 0;

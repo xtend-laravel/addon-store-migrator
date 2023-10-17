@@ -147,10 +147,10 @@ class PrestashopMigrationSync extends Command
         //$this->runCategories($connector);
         //$this->runProductOptions($connector);
         //$this->runProductFeatures($connector);
-        $this->runProducts($connector);
+        //$this->runProducts($connector);
         //$this->runCustomers($connector);
         //$this->runCarts($connector);
-        //$this->runOrders($connector);
+        $this->runOrders($connector);
     }
 
     protected function runCategories(PrestashopConnector $connector)
@@ -210,8 +210,9 @@ class PrestashopMigrationSync extends Command
 
     protected function runCustomers(PrestashopConnector $connector)
     {
-        $response = $connector->send(new CustomersRequest);
-        //$request->query()->add('limit', 100);
+        $request = new CustomersRequest;
+        // $request->query()->add('limit', 10);
+        $response = $connector->send($request);
         $response->throw();
 
         $entityIds = collect($response->json('customers'))->pluck('id');

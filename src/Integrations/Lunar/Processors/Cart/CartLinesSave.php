@@ -5,10 +5,11 @@ namespace XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Cart;
 use Illuminate\Support\Collection;
 use Lunar\Models\ProductVariant;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class CartLinesSave extends Processor
 {
-    public function process(Collection $cart): mixed
+    public function process(Collection $cart, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Xtend\Extensions\Lunar\Models\Cart $cartModel */
         $cartModel = $cart->get('cartModel');

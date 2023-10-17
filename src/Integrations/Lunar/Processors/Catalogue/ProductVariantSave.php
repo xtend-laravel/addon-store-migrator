@@ -26,11 +26,11 @@ class ProductVariantSave extends Processor
         $this->currency = Currency::getDefault();
     }
 
-    public function process(Collection $product, StoreMigratorResourceModel $resourceModel): mixed
+    public function process(Collection $product, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Lunar\Models\Product $productModel */
         $productModel = $product->get('productModel');
-        $price = number_format(Arr::get($product, 'legacy.price'), 2, '', '');
+        $price = number_format(Arr::get($productModel, 'legacy.price'), 2, '', '');
 
         if (! $productModel->variants->count()) {
             $this->createDefaultProductVariant($productModel, $product, $price);

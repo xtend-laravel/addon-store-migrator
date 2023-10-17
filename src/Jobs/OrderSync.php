@@ -10,7 +10,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithDebug;
 use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithPipeline;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithResourceModel;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Order\AddressAssociation;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Order\OrderLinesSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Order\OrderSave;
@@ -23,7 +25,13 @@ use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\OrdersReque
 
 class OrderSync implements ShouldQueue
 {
-    use Dispatchable, InteractsWithPipeline, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithDebug;
+    use InteractsWithPipeline;
+    use InteractsWithResourceModel;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * @var Collection
@@ -37,7 +45,9 @@ class OrderSync implements ShouldQueue
      */
     public function __construct(
         protected int $orderId
-    ) {}
+    ) {
+        $this->setResourceSourceId($this->orderId, 'orders');
+    }
 
     /**
      * Execute the job.
@@ -46,18 +56,20 @@ class OrderSync implements ShouldQueue
      */
     public function handle()
     {
-        $this->prepare();
-
-        if ($this->order->has('orderLines')) {
-            Model::withoutEvents(function () {
-                DB::transaction(fn () => $this->sync());
-            });
-        }
+        $this->benchmark([
+            'prepare' => fn() => $this->prepare(),
+            'sync' => fn() => $this->order->has('orderLines')
+                ? Model::withoutEvents(fn() => DB::transaction(fn() => $this->sync()))
+                : null,
+        ])->log();
     }
+
 
     protected function prepare()
     {
-        $this->prepareOrder();
+        $this->benchmark([
+            'prepare.order' => fn() => $this->prepareOrder(),
+        ])->log();
     }
 
     protected function prepareOrder(): void
@@ -101,7 +113,10 @@ class OrderSync implements ShouldQueue
     protected function sync(): void
     {
         $this->prepareThroughPipeline(
-            passable: $this->order,
+            passable: [
+                'order' => $this->order,
+                'resourceModel' => $this->resourceModel,
+            ],
             pipes: [
                 OrderSave::class,
                 OrderLinesSave::class,
@@ -109,5 +124,8 @@ class OrderSync implements ShouldQueue
                 OrderTransactionSave::class,
             ],
         );
+
+        $this->resourceModel->status = 'created';
+        $this->resourceModel->save();
     }
 }

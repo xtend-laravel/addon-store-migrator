@@ -6,11 +6,13 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Lunar\Models\Customer;
+use Lunar\Models\Product;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class CustomerSave extends Processor
 {
-    public function process(Collection $customer): mixed
+    public function process(Collection $customer, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         $dob = $customer->get('legacy')->get('birthday') !== '0000-00-00'
             ? $customer->get('legacy')->get('birthday')
@@ -20,14 +22,15 @@ class CustomerSave extends Processor
         $customerModel = Customer::updateOrCreate([
             'legacy_data->id_customer' => $customer->get('legacy')->get('id_customer'),
         ], [
-            'dob' => $dob,
             'title' => $this->lookupTitle($customer),
-            'email' => $customer->get('email'),
             'first_name' => $customer->get('first_name'),
             'last_name' => $customer->get('last_name'),
             'company_name' => $customer->get('company_name'),
-            'newsletter' => $customer->get('legacy')->get('newsletter'),
             'legacy_data' => $customer->get('legacy'),
+            'meta' => [
+                'dob' => $dob,
+                'newsletter' => collect($customer->get('legacy'))->get('newsletter'),
+            ]
         ]);
 
         if ($customerModel->legacy_data->get('deleted')) {
@@ -45,6 +48,11 @@ class CustomerSave extends Processor
 
         $customerModel->setCreatedAt($customer->get('created_at'))->save();
         $customer->put('customerModel', $customerModel);
+
+        $resourceModel->destination_model_type = Customer::class;
+        $resourceModel->destination_model_id = $customerModel->id;
+        $resourceModel->status = 'processing';
+        $resourceModel->save();
 
         return $customer;
     }

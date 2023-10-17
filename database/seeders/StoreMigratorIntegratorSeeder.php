@@ -19,7 +19,7 @@ class StoreMigratorIntegratorSeeder extends Seeder
             'name' => 'Prestashop Store Inventory',
             'integration' => 'prestashop',
         ], [
-            'resources' => ['categories', 'products'],
+            'resources' => ['categories', 'products', 'customers', 'carts', 'orders'],
         ]);
 
         $integration->resources()->updateOrCreate([
@@ -36,6 +36,24 @@ class StoreMigratorIntegratorSeeder extends Seeder
                 'image_conversions' => true,
                 'sync_only_has_images' => true,
             ],
+        ]);
+
+        $integration->resources()->updateOrCreate([
+            'name' => 'customers',
+        ], [
+            'field_map' => [],
+        ]);
+
+        $integration->resources()->updateOrCreate([
+            'name' => 'carts',
+        ], [
+            'field_map' => [],
+        ]);
+
+        $integration->resources()->updateOrCreate([
+            'name' => 'orders',
+        ], [
+            'field_map' => [],
         ]);
     }
 

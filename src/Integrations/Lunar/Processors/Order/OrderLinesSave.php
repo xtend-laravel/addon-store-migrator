@@ -7,10 +7,11 @@ use Illuminate\Support\Collection;
 use Lunar\Base\OrderModifiers;
 use Lunar\Models\ProductVariant;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class OrderLinesSave extends Processor
 {
-    public function process(Collection $order): mixed
+    public function process(Collection $order, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Xtend\Extensions\Lunar\Models\Order $orderModel */
         $orderModel = $order->get('orderModel');
@@ -20,7 +21,7 @@ class OrderLinesSave extends Processor
 
         /** @var \Lunar\Models\Cart $cart */
         $cart = $orderModel->cart;
-        $cart->getManager()->calculate();
+        $cart->calculate();
 
         $pipeline = app(Pipeline::class)
             ->send($cart)

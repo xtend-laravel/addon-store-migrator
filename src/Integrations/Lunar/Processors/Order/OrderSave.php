@@ -12,6 +12,7 @@ use Lunar\Models\Currency;
 use Lunar\Models\Customer;
 use Lunar\Models\Order;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class OrderSave extends Processor
 {
@@ -22,7 +23,7 @@ class OrderSave extends Processor
         $this->referenceGenerator = $generator;
     }
 
-    public function process(Collection $order): mixed
+    public function process(Collection $order, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         $cartModel = $this->lookupCart($order);
         if (! $cartModel) {
@@ -31,7 +32,7 @@ class OrderSave extends Processor
             return $order;
         }
 
-        $cartModel->getManager()->calculate();
+        $cartModel->calculate();
 
         $pipeline = app(Pipeline::class)
             ->send($cartModel)
@@ -81,6 +82,11 @@ class OrderSave extends Processor
         $cartModel->save();
 
         $order->put('orderModel', $orderModel);
+
+        $resourceModel->destination_model_type = Order::class;
+        $resourceModel->destination_model_id = $orderModel->id;
+        $resourceModel->status = 'processing';
+        $resourceModel->save();
 
         return $order;
     }

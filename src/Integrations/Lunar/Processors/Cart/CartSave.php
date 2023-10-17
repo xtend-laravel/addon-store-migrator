@@ -9,15 +9,16 @@ use Lunar\Models\Channel;
 use Lunar\Models\Currency;
 use Lunar\Models\Customer;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class CartSave extends Processor
 {
-    public function process(Collection $cart): mixed
+    public function process(Collection $cart, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         $cartModel = Cart::updateOrCreate([
             'legacy_data->id_cart' => $cart->get('legacy')->get('id_cart'),
         ], [
-            'customer_id' => $this->lookupCustomer($cart)?->id,
+            //'customer_id' => $this->lookupCustomer($cart)?->id,
             'user_id' => $this->lookupCustomerDefaultUser($cart)?->id,
             'currency_id' => Currency::getDefault()->id,
             'channel_id' => Channel::getDefault()->id,
@@ -29,6 +30,11 @@ class CartSave extends Processor
         $cartModel->save();
 
         $cart->put('cartModel', $cartModel);
+
+        $resourceModel->destination_model_type = Cart::class;
+        $resourceModel->destination_model_id = $cartModel->id;
+        $resourceModel->status = 'processing';
+        $resourceModel->save();
 
         return $cart;
     }

@@ -9,7 +9,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithDebug;
 use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithPipeline;
+use XtendLunar\Addons\StoreMigrator\Concerns\InteractsWithResourceModel;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Customer\AddressesSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Customer\CustomerGroupSave;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Customer\CustomerSave;
@@ -23,7 +25,13 @@ use XtendLunar\Addons\StoreMigrator\Integrations\Prestashop\Requests\GroupsReque
 
 class CustomerSync implements ShouldQueue
 {
-    use Dispatchable, InteractsWithPipeline, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithDebug;
+    use InteractsWithPipeline;
+    use InteractsWithResourceModel;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * @var Collection
@@ -37,7 +45,9 @@ class CustomerSync implements ShouldQueue
      */
     public function __construct(
         protected int $customerId
-    ) {}
+    ) {
+        $this->setResourceSourceId($this->customerId, 'customers');
+    }
 
     /**
      * Execute the job.
@@ -46,13 +56,19 @@ class CustomerSync implements ShouldQueue
      */
     public function handle()
     {
-        $this->prepare();
-        DB::transaction(fn () => $this->sync());
+         $this->benchmark([
+            'prepare' => fn() => $this->prepare(),
+            'sync' => fn() => $this->customer->isNotEmpty()
+                ? DB::transaction(fn() => $this->sync())
+                : null,
+        ])->log();
     }
 
     protected function prepare()
     {
-        $this->prepareCustomer();
+        $this->benchmark([
+            'prepare.customer' => fn() => $this->prepareCustomer(),
+        ])->log();
     }
 
     protected function prepareCustomer(): void
@@ -90,6 +106,7 @@ class CustomerSync implements ShouldQueue
             'filter[id]' => "[{$groupIds->implode('|')}]",
             'display' => 'full',
         ]);
+        $response = PrestashopConnector::make()->send($request);
 
         $groups = collect($response->json('groups'))->map(function ($optionValue) {
             return $this->prepareThroughPipeline(
@@ -114,6 +131,7 @@ class CustomerSync implements ShouldQueue
             //'filter[deleted]' => 0,
             'display' => 'full',
         ]);
+        $response = PrestashopConnector::make()->send($request);
 
         $addresses = collect($response->json('addresses'))->map(function ($optionValue) {
             return $this->prepareThroughPipeline(
@@ -132,13 +150,19 @@ class CustomerSync implements ShouldQueue
     protected function sync(): void
     {
         $this->prepareThroughPipeline(
-            passable: $this->customer,
+            passable: [
+                'customer' => $this->customer,
+                'resourceModel' => $this->resourceModel,
+            ],
             pipes: [
                 CustomerSave::class,
                 CustomerGroupSave::class,
                 AddressesSave::class,
             ],
         );
+
+        $this->resourceModel->status = 'created';
+        $this->resourceModel->save();
     }
 
     /**

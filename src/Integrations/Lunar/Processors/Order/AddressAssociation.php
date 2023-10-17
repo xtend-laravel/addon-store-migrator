@@ -5,6 +5,7 @@ namespace XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Order;
 use Illuminate\Support\Collection;
 use Lunar\Models\Order;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class AddressAssociation extends Processor
 {
@@ -13,7 +14,7 @@ class AddressAssociation extends Processor
     /**
      * @throws \Lunar\Exceptions\Carts\ShippingAddressMissingException
      */
-    public function process(Collection $order): mixed
+    public function process(Collection $order, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Xtend\Extensions\Lunar\Models\Order $orderModel */
         $this->orderModel = $order->get('orderModel');

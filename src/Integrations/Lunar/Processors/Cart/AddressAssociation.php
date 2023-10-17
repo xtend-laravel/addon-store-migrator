@@ -6,12 +6,13 @@ use Illuminate\Support\Collection;
 use Lunar\Models\Address;
 use Lunar\Models\Cart;
 use XtendLunar\Addons\StoreMigrator\Integrations\Lunar\Processors\Processor;
+use XtendLunar\Addons\StoreMigrator\Models\StoreMigratorResourceModel;
 
 class AddressAssociation extends Processor
 {
     protected ?Cart $cartModel;
 
-    public function process(Collection $cart): mixed
+    public function process(Collection $cart, ?StoreMigratorResourceModel $resourceModel = null): mixed
     {
         /** @var \Lunar\Models\Cart $cartModel */
         $this->cartModel = $cart->get('cartModel');
@@ -31,7 +32,7 @@ class AddressAssociation extends Processor
             return;
         }
 
-        $this->cartModel->getManager()->setBillingAddress($billingAddress);
+        $this->cartModel->setBillingAddress($billingAddress);
     }
 
     protected function setShippingAddress(Collection $cart): void
@@ -41,6 +42,6 @@ class AddressAssociation extends Processor
             return;
         }
 
-        $this->cartModel->getManager()->setShippingAddress($shippingAddress);
+        $this->cartModel->setShippingAddress($shippingAddress);
     }
 }
